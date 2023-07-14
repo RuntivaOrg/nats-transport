@@ -1,0 +1,32 @@
+syntax = "proto3";
+package test;
+message user_data{
+	string id = 1;
+	string attr = 2;
+	double credit = 3;
+}
+
+service user_service{
+    rpc get_user(user_data) returns (user_data);
+    rpc add_user(user_data) returns (user_data);
+    rpc del_user(user_data) returns (user_data);
+    rpc update_user(user_data) returns (user_data);
+}
+
+
+// TEST messages for NATS Requests deserialization
+message NatsCreateChatGroupRequest {
+  repeated MetadataMap headers = 1;
+  CreateChatGroupRequest data = 2;
+}
+
+message CreateChatGroupRequest {
+    int64 owner_id = 1;
+    string title = 2;
+    int32 ttl_period = 3;
+    repeated int64 user_ids = 4;
+}
+message MetadataMap {
+    string key = 1;
+    repeated string value = 2;
+}
