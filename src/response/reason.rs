@@ -10,6 +10,7 @@ pub trait ErrorReasons: Debug + Clone + Serialize + DeserializeOwned {}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ErrorReason {
     ApiKeyInvalid,
+    UnsupportedRequest,
 }
 
 impl ErrorReasons for ErrorReason {}
@@ -18,6 +19,7 @@ impl fmt::Display for ErrorReason {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ErrorReason::ApiKeyInvalid => write!(f, "API_KEY_INVALID"),
+            ErrorReason::UnsupportedRequest => write!(f, "UNSUPPORTED_REQUEST"),
         }
     }
 }
