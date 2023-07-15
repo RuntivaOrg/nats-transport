@@ -17,7 +17,7 @@ mod converter_tests {
 
         let bytes: Bytes = bytes.to_vec().into();
 
-        let serde = NatsMessageSerde::<proto::NatsCreateChatGroupRequest>::default();
+        let serde = NatsMessageSerde::<proto::NatsChatGroupCreateRequest>::default();
 
         let conv = Converter::new(serde);
         let result: NatsEnvelope<super::CreateChatGroupRequest> = conv.convert(bytes).unwrap();
@@ -75,11 +75,11 @@ struct CreateChatGroupRequest {
     pub user_ids: Vec<i64>,
 }
 
-impl TryFromNatsRequest<proto::NatsCreateChatGroupRequest> for CreateChatGroupRequest {
+impl TryFromNatsRequest<proto::NatsChatGroupCreateRequest> for CreateChatGroupRequest {
     type Error = NatsTransportError;
 
     fn try_from(
-        value: proto::NatsCreateChatGroupRequest,
+        value: proto::NatsChatGroupCreateRequest,
     ) -> Result<(Self, RequestHeaders), Self::Error> {
         let id = 1000i64;
         let public_id = "random_val".to_string();
