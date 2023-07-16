@@ -20,6 +20,10 @@ pub mod response;
 /// This module contains the [NatsServer] struct which provides NATS server access
 pub mod server;
 
+/// This module contains the framework for converting from standard Rust errors to the ErrorModel
+/// used for logging and NATS transport
+pub mod error;
+
 mod subject;
 pub use subject::SubjectName;
 

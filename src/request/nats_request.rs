@@ -14,6 +14,12 @@ pub trait TryFromNatsRequest<T>: Sized {
 #[derive(Debug)]
 pub struct RequestHeaders(pub MetadataMap);
 
+impl Default for RequestHeaders {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RequestHeaders {
     pub fn new() -> Self {
         Self(MetadataMap::new())
@@ -68,25 +74,22 @@ impl From<RequestHeaders> for Vec<proto::MetadataMap> {
         let mut headers: Vec<proto::MetadataMap> = vec![];
 
         for key_and_value in value.0.iter() {
-            match key_and_value {
-                KeyAndValueRef::Ascii(ref key, _) => {
-                    let k = key.to_string();
-                    let view = value.0.get_all(&k);
+            if let KeyAndValueRef::Ascii(ref key, _) = key_and_value {
+                let k = key.to_string();
+                let view = value.0.get_all(&k);
 
-                    // only add the key once...
-                    if !headers.iter().any(|h| h.key == k) {
-                        let v: Vec<String> = view
-                            .iter()
-                            .map(|v| v.to_str().unwrap().to_string())
-                            .collect::<Vec<_>>();
+                // only add the key once...
+                if !headers.iter().any(|h| h.key == k) {
+                    let v: Vec<String> = view
+                        .iter()
+                        .map(|v| v.to_str().unwrap().to_string())
+                        .collect::<Vec<_>>();
 
-                        headers.push(proto::MetadataMap {
-                            key: key.to_string(),
-                            value: v,
-                        })
-                    }
+                    headers.push(proto::MetadataMap {
+                        key: key.to_string(),
+                        value: v,
+                    })
                 }
-                _ => (),
             }
         }
 

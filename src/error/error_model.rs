@@ -3,35 +3,22 @@ use std::collections::HashMap;
 use chat_proto::chat as proto;
 use serde::{Deserialize, Serialize};
 
-use crate::response::{MetaKeys, Status};
+use super::{MetaKeys, Status};
 
-/// Structured error response between services.
-/// This is based on GCP Cloud API Error best practices:
-/// https://cloud.google.com/apis/design/errors#error_model
-///
-/// Example:
-///
-/// ```json
-///   {
-///     "error": {
-///       "code": 400,
-///       "message": "API key not valid. Please pass a valid API key.",
-///       "status": "INVALID_ARGUMENT",
-///       "details": [
-///         {
-///           "@type": "type.googleapis.com/google.rpc.ErrorInfo",
-///           "reason": "API_KEY_INVALID",
-///           "domain": "googleapis.com",
-///           "metadata": {
-///             "service": "translate.googleapis.com"
-///           }
-///         }
-///       ]
-///     }
-///   }
-/// ```
+pub trait ToErrorModel<R> {
+    fn to_error_model(
+        &self,
+        requestor: Option<i64>,
+        request: Option<String>,
+        reason: R,
+    ) -> ErrorModel<R>;
+
+    fn error_code(&self) -> i32;
+    fn status(&self) -> Status;
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResponseError<R> {
+pub struct ErrorModel<R> {
     pub code: i32,
 
     pub message: String,
@@ -41,23 +28,35 @@ pub struct ResponseError<R> {
     pub details: Vec<ErrorDetails<R>>,
 }
 
-impl<R> ResponseError<R> {
+impl<R> ErrorModel<R> {
     #[must_use]
-    pub fn new(status: Status) -> Self {
+    pub fn new(status: Status, code: i32, message: String) -> Self {
         Self {
             status,
-            code: status as i32,
-            message: String::new(),
+            code,
+            message,
             details: vec![],
         }
     }
+
+    pub fn with_details(mut self, reason: R, domain: String) -> Self {
+        let details = ErrorDetails::new(reason, domain, HashMap::new());
+        self.details.push(details);
+        self
+    }
+
+    pub fn append_metadata(mut self, key: MetaKeys, value: String) -> Self {
+        let details = self.details.last_mut().unwrap();
+        details.metadata.insert(key, value);
+        self
+    }
 }
 
-impl<R> From<ResponseError<R>> for proto::ErrorReply
+impl<R> From<ErrorModel<R>> for proto::ErrorReply
 where
     R: ToString,
 {
-    fn from(val: ResponseError<R>) -> proto::ErrorReply {
+    fn from(val: ErrorModel<R>) -> proto::ErrorReply {
         let mut details = Vec::<proto::ErrorDetails>::new();
         for detail in val.details {
             details.push(detail.into());
@@ -126,13 +125,13 @@ impl<R> ErrorDetails<R> {
     }
 }
 
-impl<R> Into<proto::ErrorDetails> for ErrorDetails<R>
+impl<R> From<ErrorDetails<R>> for proto::ErrorDetails
 where
     R: ToString,
 {
-    fn into(self) -> proto::ErrorDetails {
+    fn from(val: ErrorDetails<R>) -> proto::ErrorDetails {
         let mut metadata = Vec::<proto::MetaData>::new();
-        for (key, value) in self.metadata {
+        for (key, value) in val.metadata {
             let entry = proto::MetaData {
                 key: key.to_string(),
                 value: value.to_string(),
@@ -141,9 +140,13 @@ where
         }
 
         proto::ErrorDetails {
-            reason: self.reason.to_string(),
-            domain: self.domain,
+            reason: val.reason.to_string(),
+            domain: val.domain,
             metadata,
         }
     }
 }
+
+#[cfg(test)]
+#[path = "./error_model_tests.rs"]
+mod error_model_tests;
