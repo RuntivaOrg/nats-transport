@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// Manages a default static list of error reasons
 /// This can be overriden to a custom list of error reasons
 /// when using [`crate::ErrorInfo`](crate::ErrorInfo)
-#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, FromPrimitive, Serialize, Deserialize)]
 pub enum Status {
     /// The operation completed successfully.
     Ok = 0,

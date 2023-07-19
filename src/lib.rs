@@ -1,6 +1,11 @@
 #![deny(unsafe_code, unused_qualifications, trivial_casts)]
 #![deny(clippy::all)]
 // #![warn(clippy::pedantic)]
+
+extern crate num;
+#[macro_use]
+extern crate num_derive;
+
 // This library wraps the [async-nats] crate adding centralized functionality
 // of serializion (gRPC and JSON) and applying consistent message wrapper and metadata
 //
