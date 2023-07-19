@@ -25,11 +25,26 @@ use crate::error::{ErrorModel, ErrorReason, ToErrorModel};
 ///     
 ///     let error_response: NatsResponse<(), SampleErrorReason> =
 ///     NatsResponse::with_error(
-///         SampleError::InvalidArgument("No chat title provided.".to_string()),
-///         SampleErrorReason::ChatTitleEmpty,
+///         MySampleError {
+///                //msg: "No chat title provided.".to_string(),
+///                reason: SampleErrorReason::ChatTitleEmpty,
+///                source: SampleError::InvalidArgument("No chat title provided.".to_string()),
+///            },
 ///         Some(7037539637825798),
 ///         Some("chat.chatgroup.command.create".to_string()));
 ///
+///     #[derive(thiserror::Error, Debug)]
+///     pub struct MySampleError {
+///         reason: SampleErrorReason,
+///         #[source]
+///         source: SampleError,
+///     }
+///     
+///     impl Display for MySampleError {
+///         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+///             write!(f, "{}", self.source.to_string())
+///         }
+///     }
 ///
 ///     #[derive(Debug, thiserror::Error)]
 ///     pub enum SampleError {
@@ -41,17 +56,16 @@ use crate::error::{ErrorModel, ErrorReason, ToErrorModel};
 ///         InternalError(String),
 ///     }
 ///
-///     impl ToErrorModel<SampleErrorReason> for SampleError {
+///     impl ToErrorModel<SampleErrorReason> for MySampleError {
 ///         fn to_error_model(
 ///             &self,
 ///             requestor: Option<i64>,
 ///             request: Option<String>,
-///             reason: SampleErrorReason,
 ///         ) -> ErrorModel<SampleErrorReason> {
 ///             let mut model = ErrorModel::new(self.status(), self.error_code(), self.to_string());
 ///
 ///             model = model
-///                 .with_details(reason, "runtiva.com".to_string())
+///                 .with_details(self.reason, "runtiva.com".to_string())
 ///                 .append_metadata(MetaKeys::Service, "chat-persist.runtiva.com".to_string());
 ///
 ///             if let Some(request) = request {
@@ -66,21 +80,21 @@ use crate::error::{ErrorModel, ErrorReason, ToErrorModel};
 ///         }
 ///
 ///         fn error_code(&self) -> i32 {
-///             match self {
+///             match &self.source {
 ///                 SampleError::InvalidArgument(_) => 400,
 ///                 SampleError::InternalError { .. } => 500,
 ///             }
 ///         }
 ///
 ///         fn status(&self) -> Status {
-///             match self {
+///             match &self.source {
 ///                 SampleError::InvalidArgument(_) => Status::InvalidArgument,
 ///                 SampleError::InternalError { .. } => Status::Internal,
 ///             }
 ///         }
 ///     }
 ///     
-///     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+///     #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 ///     pub enum SampleErrorReason {
 ///         ChatTitleEmpty,
 ///         ChatAboutTooLong,
@@ -116,12 +130,11 @@ impl<T, R> NatsResponse<T, R> {
 
     pub fn with_error(
         err: impl ToErrorModel<R>,
-        reason: R,
         requestor: Option<i64>,
         request: Option<String>,
     ) -> Self {
         Self {
-            error: Some(err.to_error_model(requestor, request, reason)),
+            error: Some(err.to_error_model(requestor, request)),
             data: None,
         }
     }

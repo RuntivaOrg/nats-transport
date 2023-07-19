@@ -13,10 +13,9 @@ mod error_model_tests {
             source: super::SampleError::InvalidArgument("No chat title provided.".to_string()),
         };
 
-        let model = err.source.to_error_model(
+        let model = err.to_error_model(
             Some(1234567890),
             Some("chat.chatgroup.command.create".to_string()),
-            err.reason,
         );
 
         //panic!("{:?}", model.details.first().unwrap().metadata.len(), 3);
@@ -97,17 +96,16 @@ pub enum SampleError {
     InternalError(String),
 }
 
-impl ToErrorModel<SampleErrorReason> for SampleError {
+impl ToErrorModel<SampleErrorReason> for MySampleError {
     fn to_error_model(
         &self,
         requestor: Option<i64>,
         request: Option<String>,
-        reason: SampleErrorReason,
     ) -> ErrorModel<SampleErrorReason> {
         let mut model = ErrorModel::new(self.status(), self.error_code(), self.to_string());
 
         model = model
-            .with_details(reason, "runtiva.com".to_string())
+            .with_details(self.reason, "runtiva.com".to_string())
             .append_metadata(MetaKeys::Service, "chat-persist.runtiva.com".to_string());
 
         if let Some(request) = request {
@@ -122,21 +120,21 @@ impl ToErrorModel<SampleErrorReason> for SampleError {
     }
 
     fn error_code(&self) -> i32 {
-        match self {
+        match &self.source {
             SampleError::InvalidArgument(_) => 400,
             SampleError::InternalError { .. } => 500,
         }
     }
 
     fn status(&self) -> Status {
-        match self {
+        match &self.source {
             SampleError::InvalidArgument(_) => Status::InvalidArgument,
             SampleError::InternalError { .. } => Status::Internal,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum SampleErrorReason {
     ChatTitleEmpty,
     ChatAboutTooLong,

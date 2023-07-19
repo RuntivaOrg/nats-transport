@@ -6,12 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::{MetaKeys, Status};
 
 pub trait ToErrorModel<R> {
-    fn to_error_model(
-        &self,
-        requestor: Option<i64>,
-        request: Option<String>,
-        reason: R,
-    ) -> ErrorModel<R>;
+    fn to_error_model(&self, requestor: Option<i64>, request: Option<String>) -> ErrorModel<R>;
 
     fn error_code(&self) -> i32;
     fn status(&self) -> Status;
