@@ -26,15 +26,16 @@ use crate::error::{ErrorModel, ErrorReason, ToErrorModel};
 ///     let error_response: NatsResponse<(), SampleErrorReason> =
 ///     NatsResponse::with_error(
 ///         MySampleError {
-///                //msg: "No chat title provided.".to_string(),
+///                msg: "No chat title provided.".to_string(),
 ///                reason: SampleErrorReason::ChatTitleEmpty,
-///                source: SampleError::InvalidArgument("No chat title provided.".to_string()),
+///                source: SampleError::InvalidArgument("Invalid Arg: No chat title provided.".to_string()),
 ///            },
 ///         Some(7037539637825798),
 ///         Some("chat.chatgroup.command.create".to_string()));
 ///
 ///     #[derive(thiserror::Error, Debug)]
 ///     pub struct MySampleError {
+///         msg: String,
 ///         reason: SampleErrorReason,
 ///         #[source]
 ///         source: SampleError,
@@ -79,6 +80,10 @@ use crate::error::{ErrorModel, ErrorReason, ToErrorModel};
 ///             model
 ///         }
 ///
+///         fn msg(&self) -> String {
+///            self.msg.clone()
+///        }
+///  
 ///         fn error_code(&self) -> i32 {
 ///             match &self.source {
 ///                 SampleError::InvalidArgument(_) => 400,

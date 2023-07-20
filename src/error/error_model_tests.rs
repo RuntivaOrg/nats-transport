@@ -8,9 +8,11 @@ mod error_model_tests {
     #[test]
     fn test_error_model() {
         let err = MySampleError {
-            //msg: "No chat title provided.".to_string(),
+            msg: "No chat title provided.".to_string(),
             reason: super::SampleErrorReason::ChatTitleEmpty,
-            source: super::SampleError::InvalidArgument("No chat title provided.".to_string()),
+            source: super::SampleError::InvalidArgument(
+                "Missing Argument: No chat title provided.".to_string(),
+            ),
         };
 
         let model = err.to_error_model(
@@ -75,6 +77,7 @@ use super::{ErrorModel, ToErrorModel};
 
 #[derive(thiserror::Error, Debug)]
 pub struct MySampleError {
+    msg: String,
     reason: SampleErrorReason,
     #[source]
     source: SampleError,
@@ -102,7 +105,7 @@ impl ToErrorModel<SampleErrorReason> for MySampleError {
         requestor: Option<i64>,
         request: Option<String>,
     ) -> ErrorModel<SampleErrorReason> {
-        let mut model = ErrorModel::new(self.status(), self.error_code(), self.to_string());
+        let mut model = ErrorModel::new(self.status(), self.error_code(), self.msg());
 
         model = model
             .with_details(self.reason, "runtiva.com".to_string())
@@ -117,6 +120,10 @@ impl ToErrorModel<SampleErrorReason> for MySampleError {
         }
 
         model
+    }
+
+    fn msg(&self) -> String {
+        self.msg.to_string()
     }
 
     fn error_code(&self) -> i32 {
