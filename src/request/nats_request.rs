@@ -1,4 +1,5 @@
-use chat_proto::chat as proto;
+use chat_proto::chat as proto_chat;
+use chat_proto::updates_stream as proto_updates;
 use tonic::metadata::{AsciiMetadataKey, KeyAndValueRef, MetadataMap};
 
 // TryFrom converter used for NatsRequest to extract both generic data and the MetadataMap headers
@@ -38,10 +39,12 @@ impl<T> NatsEnvelope<T> {
     }
 }
 
-// Converter for proto::MetadataMap to tonic::metadata::MetadataMap
+// ******************* Chat Proto conversions ******************
+
+// Converter for proto_chat::MetadataMap to tonic::metadata::MetadataMap
 // This is used in the TryFromNatsRequest<T> implementations to extract out the headers
-impl From<Vec<proto::MetadataMap>> for RequestHeaders {
-    fn from(values: Vec<proto::MetadataMap>) -> Self {
+impl From<Vec<proto_chat::MetadataMap>> for RequestHeaders {
+    fn from(values: Vec<proto_chat::MetadataMap>) -> Self {
         let mut map = MetadataMap::new();
         for header_val in values.iter() {
             let key = header_val.key.as_bytes();
@@ -69,9 +72,9 @@ impl From<Vec<proto::MetadataMap>> for RequestHeaders {
 
 // Converter for tonic::metadata::MetadataMap to proto::MetadataMap
 // This is used in generated gRPC-based NATs requests
-impl From<RequestHeaders> for Vec<proto::MetadataMap> {
+impl From<RequestHeaders> for Vec<proto_chat::MetadataMap> {
     fn from(value: RequestHeaders) -> Self {
-        let mut headers: Vec<proto::MetadataMap> = vec![];
+        let mut headers: Vec<proto_chat::MetadataMap> = vec![];
 
         for key_and_value in value.0.iter() {
             if let KeyAndValueRef::Ascii(ref key, _) = key_and_value {
@@ -85,7 +88,68 @@ impl From<RequestHeaders> for Vec<proto::MetadataMap> {
                         .map(|v| v.to_str().unwrap().to_string())
                         .collect::<Vec<_>>();
 
-                    headers.push(proto::MetadataMap {
+                    headers.push(proto_chat::MetadataMap {
+                        key: key.to_string(),
+                        value: v,
+                    })
+                }
+            }
+        }
+
+        headers
+    }
+}
+
+// ***************** Updates Proto conversions *****************
+
+// Converter for proto_chat::MetadataMap to tonic::metadata::MetadataMap
+// This is used in the TryFromNatsRequest<T> implementations to extract out the headers
+impl From<Vec<proto_updates::MetadataMap>> for RequestHeaders {
+    fn from(values: Vec<proto_updates::MetadataMap>) -> Self {
+        let mut map = MetadataMap::new();
+        for header_val in values.iter() {
+            let key = header_val.key.as_bytes();
+            let values = header_val.value.iter();
+            let mut ctr = 0;
+            for value in values {
+                ctr += 1;
+                if ctr == 1 {
+                    map.insert(
+                        AsciiMetadataKey::from_bytes(key).unwrap(),
+                        value.parse().unwrap(),
+                    );
+                } else {
+                    map.append(
+                        AsciiMetadataKey::from_bytes(key).unwrap(),
+                        value.parse().unwrap(),
+                    );
+                }
+            }
+        }
+
+        RequestHeaders(map)
+    }
+}
+
+// Converter for tonic::metadata::MetadataMap to proto::MetadataMap
+// This is used in generated gRPC-based NATs requests
+impl From<RequestHeaders> for Vec<proto_updates::MetadataMap> {
+    fn from(value: RequestHeaders) -> Self {
+        let mut headers: Vec<proto_updates::MetadataMap> = vec![];
+
+        for key_and_value in value.0.iter() {
+            if let KeyAndValueRef::Ascii(ref key, _) = key_and_value {
+                let k = key.to_string();
+                let view = value.0.get_all(&k);
+
+                // only add the key once...
+                if !headers.iter().any(|h| h.key == k) {
+                    let v: Vec<String> = view
+                        .iter()
+                        .map(|v| v.to_str().unwrap().to_string())
+                        .collect::<Vec<_>>();
+
+                    headers.push(proto_updates::MetadataMap {
                         key: key.to_string(),
                         value: v,
                     })
