@@ -3,7 +3,7 @@ mod converter_tests {
     use std::vec;
 
     use bytes::Bytes;
-    use chat_proto::runtiva::chatgroups::v1 as chatgroups_proto;
+    use chat_proto::runtiva::nats::v1 as proto_nats;
     use tonic::metadata::MetadataValue;
 
     use crate::{
@@ -17,7 +17,7 @@ mod converter_tests {
 
         let bytes: Bytes = bytes.to_vec().into();
 
-        let serde = NatsMessageSerde::<chatgroups_proto::NatsChatGroupCreateRequest>::default();
+        let serde = NatsMessageSerde::<proto_nats::NatsChatGroupCreateRequest>::default();
 
         let conv = Converter::new(serde);
         let result: NatsEnvelope<super::CreateChatGroupRequest> = conv.convert(bytes).unwrap();
@@ -57,7 +57,7 @@ mod converter_tests {
     }
 }
 
-use chat_proto::runtiva::chatgroups::v1 as chatgroups_proto;
+use chat_proto::runtiva::nats::v1 as proto_nats;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -75,11 +75,11 @@ struct CreateChatGroupRequest {
     pub user_ids: Vec<i64>,
 }
 
-impl TryFromNatsRequest<chatgroups_proto::NatsChatGroupCreateRequest> for CreateChatGroupRequest {
+impl TryFromNatsRequest<proto_nats::NatsChatGroupCreateRequest> for CreateChatGroupRequest {
     type Error = NatsTransportError;
 
     fn try_from(
-        value: chatgroups_proto::NatsChatGroupCreateRequest,
+        value: proto_nats::NatsChatGroupCreateRequest,
     ) -> Result<(Self, RequestHeaders), Self::Error> {
         let id = 1000i64;
         let public_id = "random_val".to_string();
