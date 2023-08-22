@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use chat_proto::chat as proto_chat;
-use chat_proto::updates_stream as proto_updates;
 use serde::{Deserialize, Serialize};
+
+use chat_proto::runtiva::nats::v1 as proto_nats;
 
 use super::{MetaKeys, Status};
 
@@ -49,36 +49,17 @@ impl<R> ErrorModel<R> {
     }
 }
 
-impl<R> From<ErrorModel<R>> for proto_chat::ErrorReply
+impl<R> From<ErrorModel<R>> for proto_nats::ErrorReply
 where
     R: ToString,
 {
-    fn from(val: ErrorModel<R>) -> proto_chat::ErrorReply {
-        let mut details = Vec::<proto_chat::ErrorDetails>::new();
+    fn from(val: ErrorModel<R>) -> proto_nats::ErrorReply {
+        let mut details = Vec::<proto_nats::ErrorDetails>::new();
         for detail in val.details {
             details.push(detail.into());
         }
 
-        proto_chat::ErrorReply {
-            code: val.code,
-            message: val.message,
-            status: val.status as i32,
-            details,
-        }
-    }
-}
-
-impl<R> From<ErrorModel<R>> for proto_updates::ErrorReply
-where
-    R: ToString,
-{
-    fn from(val: ErrorModel<R>) -> proto_updates::ErrorReply {
-        let mut details = Vec::<proto_updates::ErrorDetails>::new();
-        for detail in val.details {
-            details.push(detail.into());
-        }
-
-        proto_updates::ErrorReply {
+        proto_nats::ErrorReply {
             code: val.code,
             message: val.message,
             status: val.status as i32,
@@ -141,43 +122,21 @@ impl<R> ErrorDetails<R> {
     }
 }
 
-impl<R> From<ErrorDetails<R>> for proto_chat::ErrorDetails
+impl<R> From<ErrorDetails<R>> for proto_nats::ErrorDetails
 where
     R: ToString,
 {
-    fn from(val: ErrorDetails<R>) -> proto_chat::ErrorDetails {
-        let mut metadata = Vec::<proto_chat::MetaData>::new();
+    fn from(val: ErrorDetails<R>) -> proto_nats::ErrorDetails {
+        let mut metadata = Vec::<proto_nats::MetaData>::new();
         for (key, value) in val.metadata {
-            let entry = proto_chat::MetaData {
+            let entry = proto_nats::MetaData {
                 key: key.to_string(),
                 value: value.to_string(),
             };
             metadata.push(entry);
         }
 
-        proto_chat::ErrorDetails {
-            reason: val.reason.to_string(),
-            domain: val.domain,
-            metadata,
-        }
-    }
-}
-
-impl<R> From<ErrorDetails<R>> for proto_updates::ErrorDetails
-where
-    R: ToString,
-{
-    fn from(val: ErrorDetails<R>) -> proto_updates::ErrorDetails {
-        let mut metadata = Vec::<proto_updates::MetaData>::new();
-        for (key, value) in val.metadata {
-            let entry = proto_updates::MetaData {
-                key: key.to_string(),
-                value: value.to_string(),
-            };
-            metadata.push(entry);
-        }
-
-        proto_updates::ErrorDetails {
+        proto_nats::ErrorDetails {
             reason: val.reason.to_string(),
             domain: val.domain,
             metadata,

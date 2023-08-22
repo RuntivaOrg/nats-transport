@@ -4,11 +4,11 @@ mod nats_request_tests {
     use tonic::metadata::{MetadataMap, MetadataValue};
 
     use crate::request::nats_request::RequestHeaders;
-    use chat_proto::chat::{self as proto};
+    use chat_proto::runtiva::nats::v1 as proto_nats;
 
     #[test]
     fn test_from_proto_metadata_map_and_back() {
-        let headers = proto::MetadataMap {
+        let headers = proto_nats::MetadataMap {
             key: "key".to_string(),
             value: vec!["value1".to_string(), "value2".to_string()],
         };
@@ -26,7 +26,7 @@ mod nats_request_tests {
         assert_eq!(None, i.next());
 
         // Convert back to proto MetadataMap
-        let and_back: Vec<proto::MetadataMap> = converted.into();
+        let and_back: Vec<proto_nats::MetadataMap> = converted.into();
 
         assert_eq!(and_back.len(), 1);
         assert!(and_back[0].key == "key");
@@ -52,7 +52,7 @@ mod nats_request_tests {
         let request_headers = RequestHeaders(map);
 
         // Convert to proto MetadataMap
-        let converted: Vec<proto::MetadataMap> = request_headers.into();
+        let converted: Vec<proto_nats::MetadataMap> = request_headers.into();
 
         assert_eq!(converted.len(), 1);
         assert!(converted[0].key == "x-host-ip");
