@@ -1,6 +1,9 @@
 mod nats_server;
 pub use nats_server::NatsServer;
 
+mod nats_context;
+pub use nats_context::NatsContext;
+
 mod server_traits;
 pub use server_traits::{PublishJson, PublishProst, RequestJson, RequestProst};
 
