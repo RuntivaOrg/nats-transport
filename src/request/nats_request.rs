@@ -40,7 +40,7 @@ impl<T> NatsEnvelope<T> {
 
 // ******************* Chat Proto conversions ******************
 
-// Converter for proto_chat::MetadataMap to tonic::metadata::MetadataMap
+// Converter for proto_nats::MetadataMap to tonic::metadata::MetadataMap
 // This is used in the TryFromNatsRequest<T> implementations to extract out the headers
 impl From<Vec<proto_nats::MetadataMap>> for RequestHeaders {
     fn from(values: Vec<proto_nats::MetadataMap>) -> Self {
@@ -78,6 +78,15 @@ impl From<RequestHeaders> for Vec<proto_nats::MetadataMap> {
         for key_and_value in value.0.iter() {
             if let KeyAndValueRef::Ascii(ref key, _) = key_and_value {
                 let k = key.to_string();
+
+                // Exclude unneeded headers
+                if k == "grpc-accept-encoding" {
+                    continue;
+                }
+                if k == "accept-encoding" {
+                    continue;
+                }
+
                 let view = value.0.get_all(&k);
 
                 // only add the key once...
