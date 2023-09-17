@@ -1,5 +1,3 @@
-use std::env;
-
 use async_nats::Client;
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -17,17 +15,8 @@ pub struct NatsServer {
 }
 
 impl NatsServer {
-    /// `nats_url` is empty, this funtion will look for an env var named `NATS_URL`
-    /// otherwise, it will default to "nats://localhost:4222"
-    pub async fn initialize(nats_url: String) -> Result<NatsServer, NatsTransportError> {
-        // if `nats_url` is empty, Use the NATS_URL env variable if defined, otherwise fallback
-        // to the default.
-        let nats_url = if nats_url.trim().is_empty() {
-            env::var("NATS_URL").unwrap_or_else(|_| "nats://localhost:4222".to_string())
-        } else {
-            nats_url
-        };
-
+    /// initializes the NATS client connection
+    pub async fn initialize(nats_url: &str) -> Result<NatsServer, NatsTransportError> {
         let client = async_nats::connect(nats_url).await?;
         Ok(NatsServer { nats: client })
     }
