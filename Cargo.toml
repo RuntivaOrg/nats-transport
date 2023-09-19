@@ -20,7 +20,7 @@ tokio-stream = { version = "0.1.14" }
 async-trait = "0.1.52"
 
 # NATS 
-async-nats = "=0.29.0"
+async-nats = "=0.31.0"
 #async-nats = { git = "https://github.com/RuntivaOrg/nats.rs.git" }
 
 futures = "0.3.28" 
